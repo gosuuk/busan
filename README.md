@@ -73,6 +73,8 @@ pnpm github:gosuuk
 
 GitHub에 push하면 [CI workflow](./.github/workflows/ci.yml)가 `env:check`, `lint`, `typecheck`, `build`를 실행합니다.
 
+Vercel 배포에는 `BETTER_AUTH_URL`과 `NEXT_PUBLIC_APP_URL`을 배포 도메인으로 설정합니다. Vercel의 자동 URL 환경변수로 fallback되지만, 운영 도메인에서는 직접 지정하는 것을 권장합니다.
+
 운영 DB에는 배포 전에 마이그레이션과 관리자 seed를 적용합니다.
 
 ```bash

@@ -18,7 +18,7 @@ git init
 git branch -M main
 git add -A
 git commit -m "Initial Busan IT community setup"
-git remote add origin https://gosuuk@github.com/gosuuk/busan.git 2>/dev/null || git remote set-url origin https://gosuuk@github.com/gosuuk/busan.git
+git remote add origin git@github.com-gosuuk:gosuuk/busan.git 2>/dev/null || git remote set-url origin git@github.com-gosuuk:gosuuk/busan.git
 git push -u origin main
 ```
 
@@ -77,7 +77,9 @@ Vercel Project Settings의 Environment Variables에 `.env.vercel.example` 값을
 - `SENTRY_DSN`
 - `SENTRY_AUTH_TOKEN`
 
-`BETTER_AUTH_URL`과 `NEXT_PUBLIC_APP_URL`은 배포 도메인과 일치시킵니다.
+`BETTER_AUTH_URL`과 `NEXT_PUBLIC_APP_URL`은 배포 도메인과 일치시킵니다. Vercel의 `VERCEL_URL`로 자동 보정되지만, 운영 도메인이 확정되면 두 값을 직접 넣는 편이 가장 안전합니다.
+
+Vercel Postgres나 Neon 연동에서 `POSTGRES_URL` 또는 `POSTGRES_PRISMA_URL`만 자동 생성된 경우 앱은 이를 `DATABASE_URL` fallback으로 사용할 수 있습니다. 그래도 운영에서는 `DATABASE_URL`을 명시해 두면 마이그레이션, seed, 앱 런타임 설정을 동일하게 맞추기 쉽습니다.
 
 ## 4. Vercel Import
 

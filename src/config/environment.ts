@@ -13,6 +13,30 @@ const optionalUrl = z.preprocess(
   z.string().url().optional(),
 );
 
+const withHttpsProtocol = (value: string | undefined) => {
+  if (!value) return undefined;
+
+  const trimmedValue = value.trim();
+  if (!trimmedValue) return undefined;
+
+  return /^https?:\/\//.test(trimmedValue)
+    ? trimmedValue
+    : `https://${trimmedValue}`;
+};
+
+const normalizeEnvironment = (env: NodeJS.ProcessEnv) => ({
+  ...env,
+  DATABASE_URL:
+    env.DATABASE_URL ?? env.POSTGRES_URL ?? env.POSTGRES_PRISMA_URL,
+  BETTER_AUTH_URL: withHttpsProtocol(
+    env.BETTER_AUTH_URL ??
+      env.NEXT_PUBLIC_APP_URL ??
+      env.VERCEL_URL ??
+      env.VERCEL_BRANCH_URL ??
+      env.VERCEL_PROJECT_PRODUCTION_URL,
+  ),
+});
+
 const environmentSchema = z.object({
     NODE_ENV: z
       .enum(["development", "test", "production"])
@@ -45,4 +69,6 @@ const environmentSchema = z.object({
 
 export type Environment = z.infer<typeof environmentSchema>;
 
-export const environment = environmentSchema.parse(process.env);
+export const environment = environmentSchema.parse(
+  normalizeEnvironment(process.env),
+);
