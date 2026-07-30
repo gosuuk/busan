@@ -1,0 +1,62 @@
+{
+  "name": "busan-it-community",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "dev:db": "docker compose up -d postgres",
+    "dev:db:down": "docker compose down",
+    "dev:db:reset": "docker compose down -v && docker compose up -d postgres",
+    "dev:db:logs": "docker compose logs -f postgres",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit --incremental false",
+    "test": "vitest run --passWithNoTests",
+    "github:gosuuk": "bash scripts/setup-gosuuk-github.sh",
+    "env:check": "node --import tsx scripts/check-env.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "node --import tsx scripts/seed-admin.ts",
+    "db:setup": "pnpm db:migrate && pnpm db:seed",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@ant-design/nextjs-registry": "latest",
+    "@better-auth/drizzle-adapter": "latest",
+    "@refinedev/antd": "latest",
+    "@refinedev/core": "latest",
+    "@refinedev/nextjs-router": "latest",
+    "@vercel/analytics": "latest",
+    "antd": "latest",
+    "better-auth": "latest",
+    "drizzle-orm": "latest",
+    "next": "^15.1.6",
+    "postgres": "^3.4.5",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "server-only": "latest",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.2.0",
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
+    "autoprefixer": "^10.4.20",
+    "dotenv": "^16.4.7",
+    "drizzle-kit": "latest",
+    "eslint": "^9.17.0",
+    "eslint-config-next": "^15.1.6",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: "postgresql://busan:busan_dev_password@localhost:5432/busan_it_community_dev"
+      BETTER_AUTH_SECRET: "ci_better_auth_secret_change_me_32_chars"
+      BETTER_AUTH_URL: "http://localhost:3000"
+      MEMBER_JWT_SECRET: "ci_member_jwt_secret_change_me_32_chars"
+      ADMIN_JWT_SECRET: "ci_admin_jwt_secret_change_me_32_chars"
+      ADMIN_SEED_EMAIL: "admin@example.com"
+      ADMIN_SEED_PASSWORD: "Admin1234!local"
+      ADMIN_SEED_NAME: "관리자"
+      ADMIN_SEED_PHONE: "01099990000"
+      CRON_SECRET: "ci_cron_secret_change_me_32_chars"
+      ANALYTICS_HASH_SECRET: "ci_analytics_secret_change_me_32_chars"
+      NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check environment
+        run: pnpm env:check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Build
+        run: pnpm build
