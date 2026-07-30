@@ -45,6 +45,16 @@ ADMIN_SEED_PHONE="01099990000" \
 pnpm db:seed
 ```
 
+DB 콘솔에서 직접 SQL로 관리자만 생성하려면 아래 명령으로 SQL을 생성한 뒤 출력된 내용을 PostgreSQL SQL editor에 붙여 넣습니다.
+
+```bash
+ADMIN_SQL_EMAIL="admin@example.com" \
+ADMIN_SQL_PASSWORD="admin1234!" \
+ADMIN_SQL_NAME="관리자" \
+ADMIN_SQL_PHONE="01099990000" \
+pnpm --silent admin:sql > admin.sql
+```
+
 ## 3. Vercel 환경변수
 
 Vercel Project Settings의 Environment Variables에 `.env.vercel.example` 값을 기준으로 입력합니다.

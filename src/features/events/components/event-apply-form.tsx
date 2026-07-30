@@ -12,6 +12,7 @@ interface EventApplyFormProps {
   isEventEnded: boolean;
   isLoggedIn: boolean;
   loginPath: string;
+  unavailableMessage?: string | null;
 }
 
 const statusLabels: Record<string, string> = {
@@ -29,6 +30,7 @@ export function EventApplyForm({
   isEventEnded,
   isLoggedIn,
   loginPath,
+  unavailableMessage,
 }: EventApplyFormProps) {
   const router = useRouter();
   const [participationReason, setParticipationReason] = useState("");
@@ -41,7 +43,7 @@ export function EventApplyForm({
       <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5">
         <p className="text-sm font-semibold text-ink">
           {isEventEnded
-            ? "종료된 모임입니다."
+            ? unavailableMessage ?? "종료된 모임입니다."
             : "로그인한 회원만 행사 신청을 할 수 있습니다."}
         </p>
         {!isEventEnded ? (
@@ -115,7 +117,7 @@ export function EventApplyForm({
         </p>
         {isEventEnded ? (
           <p className="mt-2 text-sm font-semibold text-blue-700">
-            종료된 모임입니다.
+            {unavailableMessage ?? "종료된 모임입니다."}
           </p>
         ) : null}
 
@@ -144,7 +146,9 @@ export function EventApplyForm({
   if (isEventEnded) {
     return (
       <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5">
-        <p className="text-sm font-semibold text-ink">종료된 모임입니다.</p>
+        <p className="text-sm font-semibold text-ink">
+          {unavailableMessage ?? "종료된 모임입니다."}
+        </p>
       </div>
     );
   }

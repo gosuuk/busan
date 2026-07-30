@@ -19,6 +19,7 @@ const occupiedStatuses = new Set<string>([
 const publicEventStatuses = [
   offlineEventStatuses.PUBLISHED,
   offlineEventStatuses.CLOSED,
+  offlineEventStatuses.CANCELED,
 ];
 
 export async function getPublishedEventsWithSeats() {
@@ -66,10 +67,13 @@ export async function getPublishedEventsWithSeats() {
 }
 
 export async function getPublishedEventBySlug(slug: string) {
+  const slugCandidates = Array.from(
+    new Set([slug, decodeRouteSegment(slug)]),
+  );
   const [event] = await db
     .select()
     .from(offlineEvents)
-    .where(eq(offlineEvents.slug, slug))
+    .where(inArray(offlineEvents.slug, slugCandidates))
     .limit(1);
 
   if (
@@ -139,10 +143,22 @@ export function isEventEnded(
         status?: string;
       },
 ): boolean {
-  if (!(input instanceof Date) && input.status === offlineEventStatuses.CLOSED) {
+  if (
+    !(input instanceof Date) &&
+    (input.status === offlineEventStatuses.CLOSED ||
+      input.status === offlineEventStatuses.CANCELED)
+  ) {
     return true;
   }
 
   const comparableDate = input instanceof Date ? input : input.endsAt ?? input.startsAt;
   return comparableDate.getTime() < Date.now();
+}
+
+function decodeRouteSegment(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
 }

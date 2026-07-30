@@ -19,6 +19,7 @@
     "typecheck": "tsc --noEmit --incremental false",
     "test": "vitest run --passWithNoTests",
     "github:gosuuk": "bash scripts/setup-gosuuk-github.sh",
+    "admin:sql": "node --import tsx scripts/print-admin-sql.ts",
     "env:check": "node --import tsx scripts/check-env.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",

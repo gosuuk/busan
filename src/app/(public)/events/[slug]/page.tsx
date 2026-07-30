@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import Link from "next/link";
 
 import { recordProductEvent } from "@/features/analytics/server/record-event";
 import { EventApplyForm } from "@/features/events/components/event-apply-form";
@@ -11,6 +11,7 @@ import {
   getRecruitingStatus,
   isEventEnded,
 } from "@/features/events/server/queries";
+import { offlineEventStatuses } from "@/server/db/schema";
 
 interface EventDetailPageProps {
   params: Promise<{
@@ -44,11 +45,12 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
   const event = await getPublishedEventBySlug(slug);
 
   if (!event) {
-    notFound();
+    return <EventUnavailable slug={slug} />;
   }
 
   const session = await getMemberSessionFromCookies();
   const eventEnded = isEventEnded(event);
+  const unavailableMessage = getUnavailableMessage(event);
   const currentApplication = session
     ? await getEventApplicationForMember(event.id, session.user.id)
     : null;
@@ -96,9 +98,9 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
           >
             {event.title}
           </h1>
-          {eventEnded ? (
+          {unavailableMessage ? (
             <p className="mt-4 rounded-2xl bg-slate-200 px-5 py-4 text-sm font-bold text-slate-600">
-              이 모임은 일정이 지나 완전히 종료되었습니다.
+              {unavailableMessage}
             </p>
           ) : null}
           <p className="mt-5 whitespace-pre-line text-base leading-8 text-ink/65">
@@ -138,8 +140,8 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
         <aside className="h-fit rounded-3xl border border-blue-100 bg-white p-6 shadow-sm">
           <h2 className="text-xl font-bold text-ink">행사 신청</h2>
           <p className="mt-2 text-sm leading-6 text-ink/60">
-            {eventEnded
-              ? "모임일자가 지나 신청을 받지 않습니다."
+            {unavailableMessage
+              ? unavailableMessage
               : "신청 항목은 최소화했습니다. 로그인 후 바로 신청할 수 있습니다."}
           </p>
           <div className="mt-6">
@@ -151,12 +153,55 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
               isEventEnded={eventEnded}
               isLoggedIn={Boolean(session)}
               loginPath={`/login?next=/events/${event.slug}`}
+              unavailableMessage={unavailableMessage}
             />
           </div>
         </aside>
       </article>
     </main>
   );
+}
+
+function EventUnavailable({ slug }: { slug: string }) {
+  return (
+    <main className="bg-paper">
+      <section className="site-container py-16">
+        <div className="rounded-3xl border border-blue-100 bg-white p-8 shadow-sm">
+          <p className="text-sm font-bold text-blue-600">Event unavailable</p>
+          <h1 className="mt-3 text-3xl font-bold text-ink">
+            모임 정보를 찾을 수 없습니다.
+          </h1>
+          <p className="mt-4 max-w-2xl text-sm leading-7 text-ink/60">
+            이 모임은 비공개로 전환되었거나 삭제되었을 수 있습니다. 운영 DB의
+            slug와 현재 주소가 다를 때도 이 화면이 나옵니다.
+          </p>
+          <p className="mt-4 rounded-2xl bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700">
+            요청한 주소: /events/{decodeSafe(slug)}
+          </p>
+          <div className="mt-6">
+            <Link
+              className="inline-flex rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-blue-700"
+              href="/events"
+            >
+              모임 목록으로 돌아가기
+            </Link>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function getUnavailableMessage(event: { startsAt: Date; endsAt?: Date | null; status: string }) {
+  if (event.status === offlineEventStatuses.CANCELED) {
+    return "이 모임은 운영 사정으로 취소되었습니다.";
+  }
+
+  if (event.status === offlineEventStatuses.CLOSED || isEventEnded(event)) {
+    return "이 모임은 일정이 지나 완전히 종료되었습니다.";
+  }
+
+  return null;
 }
 
 function Info({ label, value }: { label: string; value: string }) {
@@ -166,4 +211,12 @@ function Info({ label, value }: { label: string; value: string }) {
       <dd className="mt-2 text-sm font-semibold text-ink">{value}</dd>
     </div>
   );
+}
+
+function decodeSafe(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
 }
