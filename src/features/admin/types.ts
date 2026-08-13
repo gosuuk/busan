@@ -17,9 +17,23 @@ export interface AdminUserRow {
 
 export interface AdminEventRow {
   capacity: number;
+  category: string;
+  creatorName: string | null;
   id: string;
   locationName: string;
   startsAt: string;
+  status: string;
+  title: string;
+}
+
+export interface AdminTeamRoomRow {
+  capacity: number;
+  createdAt: string;
+  eventSlug: string | null;
+  eventTitle: string | null;
+  id: string;
+  leaderName: string | null;
+  memberCount: number;
   status: string;
   title: string;
 }

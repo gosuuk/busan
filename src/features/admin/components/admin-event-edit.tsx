@@ -8,6 +8,7 @@ import { OfflineEventForm } from "@/features/admin/components/offline-event-form
 interface AdminEventEditProps {
   event: {
     address: string;
+    category: string;
     capacity: string;
     description: string;
     endsAt: string;
@@ -40,6 +41,7 @@ export function AdminEventEdit({ event }: AdminEventEditProps) {
           actionPath={`/api/admin/events/${event.id}`}
           initialValues={{
             address: event.address,
+            category: event.category,
             capacity: event.capacity,
             description: event.description,
             endsAt: event.endsAt,

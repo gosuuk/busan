@@ -1,0 +1,2 @@
+ALTER TABLE "team_recruitment_rooms" ADD CONSTRAINT "team_recruitment_rooms_event_id_offline_events_id_fk" FOREIGN KEY ("event_id") REFERENCES "public"."offline_events"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "team_room_applications" ADD CONSTRAINT "team_room_applications_room_id_team_recruitment_rooms_id_fk" FOREIGN KEY ("room_id") REFERENCES "public"."team_recruitment_rooms"("id") ON DELETE cascade ON UPDATE no action;

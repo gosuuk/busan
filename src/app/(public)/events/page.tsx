@@ -4,6 +4,7 @@ import Link from "next/link";
 import { recordProductEvent } from "@/features/analytics/server/record-event";
 import { EventsCalendar } from "@/features/events/components/events-calendar";
 import { analyticsEvents } from "@/features/events/server/schema";
+import { eventCategoryLabels } from "@/features/events/server/schema";
 import {
   getPublishedEventsWithSeats,
   getRecruitingStatus,
@@ -21,8 +22,18 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function EventsPage() {
-  const events = await getPublishedEventsWithSeats();
+interface EventsPageProps {
+  searchParams: Promise<{ category?: string }>;
+}
+
+export default async function EventsPage({ searchParams }: EventsPageProps) {
+  const { category } = await searchParams;
+  const allEvents = await getPublishedEventsWithSeats();
+  const activeCategory =
+    category && category in eventCategoryLabels ? category : null;
+  const events = activeCategory
+    ? allEvents.filter((event) => event.category === activeCategory)
+    : allEvents;
   const calendarEvents = events.map((event) => ({
     id: event.id,
     isEnded: isEventEnded(event),
@@ -55,6 +66,30 @@ export default async function EventsPage() {
           <p className="mt-4 text-base leading-7 text-ink/60">
             부산에서 직접 만나는 개발자, 디자이너, 기획자 모임입니다.
           </p>
+        </div>
+
+        <div className="mt-6 flex flex-wrap gap-2">
+          <Link
+            className={categoryLinkClass(activeCategory === null)}
+            href="/events"
+          >
+            전체
+          </Link>
+          {Object.entries(eventCategoryLabels).map(([value, label]) => (
+            <Link
+              className={categoryLinkClass(activeCategory === value)}
+              href={`/events?category=${value}`}
+              key={value}
+            >
+              {label}
+            </Link>
+          ))}
+          <Link
+            className="ml-auto rounded-full bg-blue-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-700"
+            href="/events/new"
+          >
+            + 행사 등록
+          </Link>
         </div>
 
         <div className="mt-8">
@@ -99,6 +134,9 @@ export default async function EventsPage() {
                           ].join(" ")}
                         >
                           {event.participationFee}
+                        </span>
+                        <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700">
+                          {eventCategoryLabels[event.category]}
                         </span>
                       </div>
                       <h2
@@ -177,4 +215,13 @@ export default async function EventsPage() {
       </section>
     </main>
   );
+}
+
+function categoryLinkClass(active: boolean): string {
+  return [
+    "rounded-full px-4 py-2 text-sm font-bold transition",
+    active
+      ? "bg-blue-600 text-white"
+      : "bg-white text-ink/60 ring-1 ring-blue-100 hover:bg-blue-50",
+  ].join(" ");
 }

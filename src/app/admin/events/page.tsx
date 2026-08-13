@@ -1,9 +1,9 @@
-import { desc } from "drizzle-orm";
+import { desc, sql } from "drizzle-orm";
 import type { Metadata } from "next";
 
 import { AdminEventsTable } from "@/features/admin/components/admin-events-table";
 import { db } from "@/server/db";
-import { offlineEvents } from "@/server/db/schema";
+import { localUsers, offlineEvents } from "@/server/db/schema";
 
 export const dynamic = "force-dynamic";
 
@@ -16,12 +16,18 @@ export default async function AdminEventsPage() {
     .select({
       id: offlineEvents.id,
       title: offlineEvents.title,
+      category: offlineEvents.category,
+      creatorName: sql<string | null>`coalesce(${localUsers.nickname}, ${localUsers.name})`,
       locationName: offlineEvents.locationName,
       startsAt: offlineEvents.startsAt,
       capacity: offlineEvents.capacity,
       status: offlineEvents.status,
     })
     .from(offlineEvents)
+    .leftJoin(
+      localUsers,
+      sql`${offlineEvents.createdByUserId} = ${localUsers.id}::text`,
+    )
     .orderBy(desc(offlineEvents.startsAt))
     .limit(100);
 

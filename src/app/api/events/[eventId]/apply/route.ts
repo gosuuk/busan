@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 
@@ -15,6 +15,10 @@ import {
   eventApplicationStatuses,
   offlineEvents,
   offlineEventStatuses,
+  teamApplicationStatuses,
+  teamRecruitmentRooms,
+  teamRoomApplications,
+  teamRoomStatuses,
 } from "@/server/db/schema";
 import { jsonError } from "@/server/http/responses";
 import { recordApplicationLog } from "@/server/logging/application-log";
@@ -216,6 +220,68 @@ export async function DELETE(
     })
     .where(eq(eventApplications.id, application.id))
     .returning();
+
+  const acceptedTeamMemberships = await db
+    .select({ roomId: teamRoomApplications.roomId })
+    .from(teamRoomApplications)
+    .innerJoin(
+      teamRecruitmentRooms,
+      eq(teamRoomApplications.roomId, teamRecruitmentRooms.id),
+    )
+    .where(
+      and(
+        eq(teamRecruitmentRooms.eventId, event.id),
+        eq(teamRoomApplications.memberId, session.user.id),
+        eq(
+          teamRoomApplications.status,
+          teamApplicationStatuses.ACCEPTED,
+        ),
+      ),
+    );
+
+  await Promise.all([
+    db
+      .update(teamRecruitmentRooms)
+      .set({ status: teamRoomStatuses.CLOSED, updatedAt: new Date() })
+      .where(
+        and(
+          eq(teamRecruitmentRooms.eventId, event.id),
+          eq(teamRecruitmentRooms.leaderId, session.user.id),
+        ),
+      ),
+    db
+      .update(teamRoomApplications)
+      .set({
+        status: teamApplicationStatuses.CANCELLED,
+        disclosureConsentWithdrawnAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(teamRoomApplications.memberId, session.user.id),
+          sql`${teamRoomApplications.roomId} in (
+            select ${teamRecruitmentRooms.id}
+            from ${teamRecruitmentRooms}
+            where ${teamRecruitmentRooms.eventId} = ${event.id}
+          )`,
+        ),
+      ),
+  ]);
+
+  if (acceptedTeamMemberships.length > 0) {
+    await db
+      .update(teamRecruitmentRooms)
+      .set({ status: teamRoomStatuses.RECRUITING, updatedAt: new Date() })
+      .where(
+        and(
+          inArray(
+            teamRecruitmentRooms.id,
+            acceptedTeamMemberships.map((membership) => membership.roomId),
+          ),
+          eq(teamRecruitmentRooms.status, teamRoomStatuses.FULL),
+        ),
+      );
+  }
 
   await recordProductEvent({
     eventName: analyticsEvents.eventRegistrationCancelled,

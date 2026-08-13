@@ -36,6 +36,10 @@ const navigationItems = [
     label: "신청자",
   },
   {
+    key: "/admin/team-rooms",
+    label: "팀 모집방",
+  },
+  {
     key: "/admin/feedback",
     label: "제안·버그",
   },

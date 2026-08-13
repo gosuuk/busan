@@ -3,12 +3,17 @@ import Link from "next/link";
 
 import { recordProductEvent } from "@/features/analytics/server/record-event";
 import { EventApplyForm } from "@/features/events/components/event-apply-form";
+import { TeamRecruitmentSection } from "@/features/events/components/team-recruitment-section";
 import { getMemberSessionFromCookies } from "@/server/auth/local/session";
-import { analyticsEvents } from "@/features/events/server/schema";
+import {
+  analyticsEvents,
+  eventCategoryLabels,
+} from "@/features/events/server/schema";
 import {
   getEventApplicationForMember,
   getPublishedEventBySlug,
   getRecruitingStatus,
+  getTeamRoomsForEvent,
   isEventEnded,
 } from "@/features/events/server/queries";
 import { offlineEventStatuses } from "@/server/db/schema";
@@ -54,6 +59,10 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
   const currentApplication = session
     ? await getEventApplicationForMember(event.id, session.user.id)
     : null;
+  const teamRooms = await getTeamRoomsForEvent(
+    event.id,
+    currentApplication ? session?.user.id : undefined,
+  );
 
   await recordProductEvent({
     eventName: analyticsEvents.eventDetailViewed,
@@ -88,6 +97,9 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
             </span>
             <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-bold text-ink/60">
               {event.participationFee}
+            </span>
+            <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700">
+              {eventCategoryLabels[event.category]}
             </span>
           </div>
           <h1
@@ -158,6 +170,30 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
           </div>
         </aside>
       </article>
+
+      <TeamRecruitmentSection
+        canCreateTeam={Boolean(currentApplication) && !eventEnded}
+        eventId={event.id}
+        isEventEnded={eventEnded}
+        isLoggedIn={Boolean(session)}
+        loginPath={`/login?next=/events/${event.slug}`}
+        rooms={teamRooms.map((room) => ({
+          acceptedMembers: room.acceptedMembers,
+          applications: room.applications,
+          capacity: room.capacity,
+          contact: room.contact,
+          description: room.description,
+          id: room.id,
+          leaderId: room.leaderId,
+          leaderName: room.leaderName,
+          memberCount: room.memberCount,
+          neededRoles: room.neededRoles,
+          status: room.status,
+          title: room.title,
+          viewerApplication: room.viewerApplication,
+        }))}
+        viewerId={currentApplication ? session?.user.id : undefined}
+      />
     </main>
   );
 }

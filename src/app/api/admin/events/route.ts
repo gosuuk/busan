@@ -78,6 +78,7 @@ export async function POST(request: Request): Promise<Response> {
       .values({
         title: parsed.title,
         slug: createEventSlug(parsed.title),
+        category: parsed.category,
         description: parsed.description,
         region: parsed.region,
         locationName: parsed.locationName,
@@ -100,6 +101,7 @@ export async function POST(request: Request): Promise<Response> {
       targetType: "offline_event",
       targetId: createdEvent.id,
       metadata: {
+        category: createdEvent.category,
         title: createdEvent.title,
         status: createdEvent.status,
       },

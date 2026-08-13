@@ -63,6 +63,19 @@ export default async function MyEventsPage() {
     .orderBy(desc(offlineEvents.startsAt))
     .limit(50);
 
+  const submittedEvents = await db
+    .select({
+      id: offlineEvents.id,
+      title: offlineEvents.title,
+      slug: offlineEvents.slug,
+      startsAt: offlineEvents.startsAt,
+      status: offlineEvents.status,
+    })
+    .from(offlineEvents)
+    .where(eq(offlineEvents.createdByUserId, session.user.id))
+    .orderBy(desc(offlineEvents.createdAt))
+    .limit(50);
+
   return (
     <main className="bg-paper">
       <section className="site-container py-12">
@@ -153,7 +166,61 @@ export default async function MyEventsPage() {
             </div>
           )}
         </div>
+
+        <div className="mt-14 flex items-end justify-between gap-4">
+          <div>
+            <p className="text-sm font-bold text-blue-600">My Submissions</p>
+            <h2 className="mt-2 text-3xl font-bold text-ink">내가 등록한 행사</h2>
+          </div>
+          <Link
+            className="rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white"
+            href="/events/new"
+          >
+            + 행사 등록
+          </Link>
+        </div>
+        <div className="mt-6 grid gap-4">
+          {submittedEvents.length ? (
+            submittedEvents.map((event) => (
+              <div
+                className="flex flex-col gap-4 rounded-2xl border border-blue-100 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between"
+                key={event.id}
+              >
+                <div>
+                  <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
+                    {submissionStatusLabels[event.status] ?? event.status}
+                  </span>
+                  <h3 className="mt-3 text-lg font-bold text-ink">{event.title}</h3>
+                  <p className="mt-1 text-sm text-ink/55">
+                    {event.startsAt.toLocaleString("ko-KR")}
+                  </p>
+                </div>
+                {event.status === "published" ? (
+                  <Link
+                    className="text-sm font-bold text-blue-600"
+                    href={`/events/${event.slug}`}
+                  >
+                    공개 페이지 보기 →
+                  </Link>
+                ) : null}
+              </div>
+            ))
+          ) : (
+            <p className="rounded-2xl border border-blue-100 bg-white p-6 text-sm text-ink/55">
+              아직 등록한 행사가 없습니다.
+            </p>
+          )}
+        </div>
       </section>
     </main>
   );
 }
+
+const submissionStatusLabels: Record<string, string> = {
+  draft: "임시저장",
+  pending: "관리자 검토 대기",
+  published: "공개",
+  closed: "종료",
+  canceled: "취소",
+  rejected: "반려",
+};

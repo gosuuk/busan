@@ -56,6 +56,8 @@ export default async function AdminPage() {
       .select({
         id: offlineEvents.id,
         title: offlineEvents.title,
+        category: offlineEvents.category,
+        creatorName: sql<string | null>`null`,
         locationName: offlineEvents.locationName,
         startsAt: offlineEvents.startsAt,
         capacity: offlineEvents.capacity,

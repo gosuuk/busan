@@ -78,6 +78,12 @@ export function SiteHeader({ session }: SiteHeaderProps) {
               내 일정
             </Link>
             <Link
+              className="hidden rounded-xl border border-blue-100 bg-white px-4 py-2 text-sm font-bold text-ink transition hover:border-blue-200 hover:bg-blue-50 lg:inline-flex"
+              href="/events/new"
+            >
+              행사 등록
+            </Link>
+            <Link
               className="hidden rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700 sm:inline-flex"
               href="/profile"
             >

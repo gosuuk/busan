@@ -48,6 +48,7 @@ export async function PATCH(
       .update(offlineEvents)
       .set({
         title: parsed.title,
+        category: parsed.category,
         description: parsed.description,
         region: parsed.region,
         locationName: parsed.locationName,

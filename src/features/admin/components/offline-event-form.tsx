@@ -4,9 +4,11 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { apiRequest, ApiClientError } from "@/lib/api-client";
+import { eventCategoryLabels } from "@/features/events/server/schema";
 
 const initialForm = {
   title: "",
+  category: "hackathon",
   description: "",
   region: "서면",
   locationName: "",
@@ -26,12 +28,14 @@ interface OfflineEventFormProps {
   actionPath?: string;
   initialValues?: Partial<OfflineEventFormState>;
   mode?: "create" | "edit";
+  submissionMode?: "admin" | "member";
 }
 
 export function OfflineEventForm({
   actionPath = "/api/admin/events",
   initialValues,
   mode = "create",
+  submissionMode = "admin",
 }: OfflineEventFormProps) {
   const router = useRouter();
   const [form, setForm] = useState<OfflineEventFormState>(() => ({
@@ -41,6 +45,7 @@ export function OfflineEventForm({
   const [message, setMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isEditMode = mode === "edit";
+  const isMemberSubmission = submissionMode === "member";
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -48,22 +53,24 @@ export function OfflineEventForm({
     setMessage(null);
 
     try {
-      await fetch("/api/admin/audit-actions", {
-        body: JSON.stringify({
-          action: isEditMode
-            ? "admin_offline_event_updated"
-            : "admin_event_form_submitted",
-          targetType: "offline_event",
-          metadata: {
-            title: form.title,
+      if (!isMemberSubmission) {
+        await fetch("/api/admin/audit-actions", {
+          body: JSON.stringify({
+            action: isEditMode
+              ? "admin_offline_event_updated"
+              : "admin_event_form_submitted",
+            targetType: "offline_event",
+            metadata: {
+              title: form.title,
+            },
+          }),
+          credentials: "same-origin",
+          headers: {
+            "Content-Type": "application/json",
           },
-        }),
-        credentials: "same-origin",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        method: "POST",
-      });
+          method: "POST",
+        });
+      }
 
       await apiRequest(actionPath, {
         method: isEditMode ? "PATCH" : "POST",
@@ -81,7 +88,9 @@ export function OfflineEventForm({
         setForm(initialForm);
       }
       setMessage(
-        isEditMode
+        isMemberSubmission
+          ? "행사가 등록되었습니다. 관리자 검토 후 공개됩니다."
+          : isEditMode
           ? "오프라인 모임이 수정되었습니다."
           : "오프라인 모임이 생성되었습니다.",
       );
@@ -115,6 +124,21 @@ export function OfflineEventForm({
           required
           value={form.title}
         />
+      </label>
+
+      <label className="block">
+        <span className="text-sm font-semibold text-ink">행사 카테고리</span>
+        <select
+          className="form-input mt-2"
+          onChange={(event) => updateField("category", event.target.value)}
+          value={form.category}
+        >
+          {Object.entries(eventCategoryLabels).map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
       </label>
 
       <label className="block">
@@ -231,17 +255,23 @@ export function OfflineEventForm({
         </label>
       </div>
 
-      <label className="block">
-        <span className="text-sm font-semibold text-ink">상태</span>
-        <select
-          className="form-input mt-2"
-          onChange={(event) => updateField("status", event.target.value)}
-          value={form.status}
-        >
-          <option value="draft">임시저장</option>
-          <option value="published">공개</option>
-        </select>
-      </label>
+      {!isMemberSubmission ? (
+        <label className="block">
+          <span className="text-sm font-semibold text-ink">상태</span>
+          <select
+            className="form-input mt-2"
+            onChange={(event) => updateField("status", event.target.value)}
+            value={form.status}
+          >
+            <option value="draft">임시저장</option>
+            <option value="pending">검토 대기</option>
+            <option value="published">공개</option>
+            <option value="closed">종료</option>
+            <option value="canceled">취소</option>
+            <option value="rejected">반려</option>
+          </select>
+        </label>
+      ) : null}
 
       {message ? (
         <p className="whitespace-pre-line rounded-md bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700">
@@ -257,10 +287,14 @@ export function OfflineEventForm({
         {isSubmitting
           ? isEditMode
             ? "수정 중"
-            : "생성 중"
+            : isMemberSubmission
+              ? "등록 중"
+              : "생성 중"
           : isEditMode
             ? "모임 수정"
-            : "모임 생성"}
+            : isMemberSubmission
+              ? "검토 요청하기"
+              : "모임 생성"}
       </button>
     </form>
   );
@@ -327,6 +361,7 @@ function isErrorDetail(value: unknown): value is {
 
 const fieldLabels: Record<string, string> = {
   title: "모임명",
+  category: "행사 카테고리",
   description: "소개",
   region: "부산 지역",
   locationName: "장소명",

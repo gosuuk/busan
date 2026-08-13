@@ -36,6 +36,7 @@ export default async function AdminEventEditPage({
     <AdminEventEdit
       event={{
         address: event.address ?? "",
+        category: event.category,
         capacity: String(event.capacity),
         description: event.description,
         endsAt: event.endsAt ? toDateTimeLocal(event.endsAt) : "",
